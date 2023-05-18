@@ -100,11 +100,7 @@ void terminal_writestring(const char *data) {
     terminal_write(data, strlen(data));
 }
 
-int64_t nums[] = {3,
-                -7,
-                15,
-                -18,
-                0};
+int64_t nums[] = { 0 };
 bool lastSign = false;
 
 void kmain(void) {
