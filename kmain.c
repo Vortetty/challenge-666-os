@@ -100,8 +100,8 @@ void terminal_writestring(const char *data) {
     terminal_write(data, strlen(data));
 }
 
-int64_t nums[] = { 0 };
-bool lastSign = false;
+int64_t nums[] = { 0 }; // good
+bool lastSign = false; // good
 
 void kmain(void) {
     /* Initialize terminal interface */

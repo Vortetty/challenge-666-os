@@ -20,10 +20,8 @@ VGA_COLOR_LIGHT_MAGENTA equ 13
 VGA_COLOR_LIGHT_BROWN equ 14
 VGA_COLOR_WHITE equ 15
 
-nums: dd -2, 4, -16, 15, -24, 2 ; list
-numlen: dd 6; count of values
-cur_flag: db 0
-last_flag: db 0
+nums: dd -2, 4, 16, -15, 24, 2 ; list
+numlen: dd 5*4 ; count of values multiplied by 4
 
 global kmain
 kmain:
@@ -34,61 +32,89 @@ kmain:
     mov esi, hello_string
     call terminal_write_string
 
-; so no registers are unused in this and i am not about to rewrite what's below so... time for memory addressing and being slow
-    mov ebx,[nums]
-    test ebx,ebx
-    mov ecx,0
-    sets cl
-    ;mov ebx,eax
-    ;not ebx
-    ;mov [pre_nums], ebx
+; register layout
+; eax - accumulator, count which num
+; bh  - last sign
+; ch  - current sign
+; edx - current int
+; esi - max iter
+; edi - ?
+    mov edx, [nums]     ; get first int
+    test edx,edx        ; test
+    jz .fail_zero_anger ; if zero then fail else continue
+    mov bh, 0
+    test edx,edx        ; test
+    sets bh             ; store the sign in bh
 
-    mov eax,[numlen]
-    mov edx,4
+    mov eax, 4        ; skip first byte, start iteration at 1
+    mov esi, [numlen] ; where to stop iteration
 
 .start_loop:
-    test [last_flag],ecx
-    cmp eax,0
-    je .succeed
+    cmp eax, esi ; check if we are past the end
+    jge .succeed ; if at or past the end then succeed
 
-    mov ebx, [nums+edx]
-    mov ecx,0
-    cmp ebx,0
-    sets cl
-    jz .fail_z_anger
-    test [last_flag],ecx
-    je .fail
+    mov edx, [nums + eax] ; get next int
+    test edx,edx          ; test
+    jz .fail_zero_anger   ; if zero then fail else continue
+    mov ch, 0             ; clear ch
+    test edx,edx          ; test
+    sets ch               ; store the sign in ch
 
-.correct:
-    dec eax
-    add edx,4
-    jmp .start_loop
+    cmp ch, bh      ; test
+    je .fail_no_alt ; fail if sign did not change
+    mov bh, ch      ; move ch to bh since sign changed
 
-.fail:
-    mov dh, VGA_COLOR_RED
+    add eax, 4      ; iterate
+    jmp .start_loop ; restart loop
+
+.fail_no_alt:
+    mov eax, 0 ; one of these breaks this print for some reason so.... yea
+    mov bh, 0
+    mov ch, 0
+    mov edx, 0
+    mov esi, 0
+    mov edi, 0
+    mov dh, VGA_COLOR_LIGHT_RED
     mov dl, VGA_COLOR_BLACK
     call terminal_set_color
     mov esi, fail_string
     call terminal_write_string
-    jmp .loop_end
+    jmp $
 
-.fail_z_anger:
-    mov dh, VGA_COLOR_LIGHT_GREEN
-    mov dl, VGA_COLOR_RED
+.fail_zero_anger:
+    mov eax, 0 ; one of these breaks this print for some reason so.... yea
+    mov bh, 0
+    mov ch, 0
+    mov edx, 0
+    mov esi, 0
+    mov edi, 0
+    mov dh, VGA_COLOR_LIGHT_CYAN
+    mov dl, VGA_COLOR_LIGHT_MAGENTA
     call terminal_set_color
     mov esi, anger_string
     call terminal_write_string
-    jmp .loop_end
+    jmp $
 
 .succeed:
-    mov dh, VGA_COLOR_LIGHT_GREY
+    mov eax, 0 ; one of these breaks this print for some reason so.... yea
+    mov bh, 0
+    mov ch, 0
+    mov edx, 0
+    mov esi, 0
+    mov edi, 0
+    mov dh, VGA_COLOR_LIGHT_GREEN
     mov dl, VGA_COLOR_BLACK
     call terminal_set_color
     mov esi, success_string
     call terminal_write_string
-    jmp .loop_end
+    jmp $
 
 .loop_end:
+    mov dh, VGA_COLOR_LIGHT_GREY
+    mov dl, VGA_COLOR_BLACK
+    call terminal_set_color
+    mov esi, end_string
+    call terminal_write_string
     jmp $
 
 ; IN = dl: y, dh: x
@@ -231,9 +257,10 @@ terminal_write_string:
 ; - The string is looped through twice on printing.
 
 hello_string db "Hello, i am for challenge #666!", 0xA, 0 ; 0xA = line feed
-anger_string db "0 is even but fail anyway", 0xA, 0 ; 0xA = line feed
-success_string db "Yay, all values alternated!", 0xA, 0 ; 0xA = line feed
+anger_string db "0 is even but fail anyway >:c", 0xA, 0 ; 0xA = line feed
+success_string db "Yay, all values alternated! :3", 0xA, 0 ; 0xA = line feed
 fail_string db "Not all values alternated :/", 0xA, 0 ; 0xA = line feed
+end_string db "End", 0xA, 0 ; 0xA = line feed
 
 
 terminal_color db 0
