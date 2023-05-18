@@ -20,8 +20,8 @@ VGA_COLOR_LIGHT_MAGENTA equ 13
 VGA_COLOR_LIGHT_BROWN equ 14
 VGA_COLOR_WHITE equ 15
 
-nums: dd -2, 4, 16, -15, 24, 2 ; list
-numlen: dd 5*4 ; count of values multiplied by 4
+nums: dd -2, 4, -16, 0, -24, 2 ; list
+numlen: dd 5 ; count of values up to 1,073,741,824 (it's left shifted 2 to multiply by 4 so needs the extra room)
 
 global kmain
 kmain:
@@ -48,6 +48,7 @@ kmain:
 
     mov eax, 4        ; skip first byte, start iteration at 1
     mov esi, [numlen] ; where to stop iteration
+    shl esi, 2        ; multiply by 2 so esi can be compared to eax for iteration
 
 .start_loop:
     cmp eax, esi ; check if we are past the end
